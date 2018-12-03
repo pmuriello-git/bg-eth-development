@@ -25,39 +25,33 @@
 	<script>  
     	window.onload = function() {
         	updateBlocks();
+        	sortTable();
     	}
 
     	function updateBlocks() {
     		let provider = ethers.getDefaultProvider( "homestead" );
-    		console.log( "Provider" );
 
-    		// TODO: Get the current gas price and pass the result to printGasPrice() function
+    		// TODO: Get the current gas price and pass the result to a function to print the price on the page
     		provider.getGasPrice().then((gasPrice) => {
 	    		// The Gas Price is returned as a BigNumber, so we convert it to a String
     			var gasPriceString = gasPrice.toString();
-    			// Inject the Gas Price
+    			// Inject the Gas Price into the web page
     			var gasPriceText = document.getElementById('gasPrice');
     			gasPriceText.insertAdjacentHTML("beforeend", gasPriceString);
-    			console.log( "Gas Price: " + gasPriceString );
 			});
 
 			// TODO: Get the latest block number    			
     		provider.getBlockNumber().then((blockNumber) => {
-	    		// TODO: Get the last 10 blocks and 10 result to printBlock() function
+	    		// TODO: Get the last 10 blocks... 
+	    		// (Starting with the most recent block, loop through and grab the previous nine blocks as well)
 	    		for (var b = blockNumber; b > blockNumber-10; b--) {
-	    			var blockNumberString = blockNumber.toString();
-	    			console.log("Block Number: " + blockNumberString);
 	    			provider.getBlock(b).then((block) => {
-	    				printBlock(block);
+	    				// ...and pass the result to printBlock() function
+						printBlock(block);
 					});
 				}
 	    	});
     	}
-
-		function printGasPrice(gasPrice) {
-			var gasPriceText = document.getElementById('gasPrice');
-    		gasPriceText.insertAdjacentHTML('beforeend', gasPrice);
-		}
 
 		function printBlock(block) {
 		    var table = document.getElementById('blocks');
@@ -74,6 +68,43 @@
 		    cell5.innerHTML = block['transactions'].length;
 		}
 
+		function sortTable() {
+			// Because it appears as though the "table.insertRow(-1)" function is not being processed in block order
+			// allow the user to manually sort the blocks by clicking a button
+			
+			// Initialize variables that will be used in the sortTable function
+			var table, rows, switching, i, x, y, shouldSwitch;
+			// Get a reference to the HTML table element that will be sorted
+			table = document.getElementById("blocks");
+			
+			switching = true;
+			// Make a loop that will continue until no switching has been done
+			while (switching) {
+			    // Start by saying, no switching is done
+			    switching = false;
+			    rows = table.rows;
+			    // Loop through all table rows (except the first, which contains table headers)
+			    for (i = 1; i < (rows.length - 1); i++) {
+			    	// Start by saying there should be no switching
+			    	shouldSwitch = false;
+			    	// Get the two elements you want to compare, one from current row and one from the next
+			    	x = rows[i].getElementsByTagName("TD")[0];
+			    	y = rows[i + 1].getElementsByTagName("TD")[0];
+			    	// Check if the two rows should switch place
+			    	if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+			        	// If so, mark as a switch and break the loop
+			        	shouldSwitch = true;
+			        	break;
+			    	}
+			    }
+			    if (shouldSwitch) {
+			    	// If a switch has been marked, make the switch and mark that a switch has been done
+			    	rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+			    	switching = true;
+			    }
+			}
+		}
+
 	</script>
 
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
@@ -81,7 +112,7 @@
 </head>
 <body>
     <div class="container-fluid">
-    	<div style="background: #1CA0F2 url(https://www.superdatascience.com/wp-content/uploads/2018/03/learn-blockchain.png) no-repeat right; background-size: 300px 150px; height: 150px; color: white;">
+    	<div style="background: #1CA0F2 url(https://www.superdatascience.com/wp-content/uploads/2018/03/learn-blockchain.png) no-repeat right; background-size: 300px 150px; height: 150px; padding: 15px; color: white;">
         <!--
         <div class="jumbotron">
         -->
@@ -93,7 +124,10 @@
         </div>
 
         <div class="card bg-primary text-white mb-3">
-            <div class="card-body"><h2 id="gasPrice"><i class="fas fa-gas-pump">&nbsp;&nbsp;</i>Gas Price:&nbsp;</h2></div>
+            <div class="card-body">
+            	<h2 id="gasPrice"><i class="fas fa-gas-pump">&nbsp;&nbsp;</i>Gas Price:&nbsp;</h2>
+	            <p><button onclick="sortTable()">Sort Blocks</button></p>
+            </div>
         </div>
 
         <table class="table" id="blocks">
